@@ -1,0 +1,180 @@
+#This is the R script for ancestral state reconstruction analyses for McKim & Turner, 2026 publication
+#Comparative morphology of silk-spinning systems of the families Ampeliscidae and Paragammaropsidae (Amphipoda) Siena McKim & Thomas Turner, Journal of Crustacean Biology, 2026 46(4), ruag070 https://doi.org/10.1093/jcbiol/ruag070 
+
+#abstract: Silk glands have been found in two groups of amphipods: Corophiida and Ampeliscidae. The silk glands in Ampeliscidae, however, have yet to be examined in detail. We report, for the first time, the morphology and distribution of pereiopodal glands in Ampeliscidae, in non-thread producing Synopiidae, and in Paragammaropsidae. In Ampeliscidae we found two gland types distributed throughout all pereiopods which have the ability to create threads. Pereiopods 3–4 have additional silk-extrusion morphology at the tip of the dactyli in which silk is transformed into semi-cylindrical threads used for building domiciles. Synopiid out- group species have one of the gland types but lack silk-extrusion morphology. Using ancestral state reconstruction analysis, we find that glands in Synopiidae are likely ancestral and hypothesize that silk glands in Ampeliscidae are derived from these ancestral glands. Silk-spinning pereiopods in Paragammaropsidae have similarities with both Corophiida and Ampeliscidae but have distinctions. Ampeliscidae silk-spinning systems bear surprising resemblance to Corophiida which prompts reconsiderations of the taxonomic placement of Ampeliscidae and the origins of silk-spinning in amphipods. This is the first extensive study on the glandular systems of Ampeliscidae, Synopiidae, and Paragammaropsidae using advanced microscopy, providing pertinent morphological data to the study of arthropod silk gland evolution and complex traits.
+
+#R Script written by Siena McKim 
+
+#Reconstruct silk-spinning charcters on the phylogeny, testing different models of evolution for each character on the phylogeny
+
+# STEP 1: SET UP LIBRARIES AND ENV
+#Load packages
+library(phylogram) #allows us to read in our phylogeny
+library(ape) #provides the chronos function for making our tree ultrametric
+library(corHMM) #provide rayDISC function for ASR
+library(phytools) #allows us to do lots of stuff with our phylogeny, like plot & get node/tip info
+
+# set working directory. This will make calling all data files easier if everything is in the same folder. 
+setwd("") #enter the path to the folder where you have saved your files 
+
+# STEP 2: IMPORT PHYLOGENY & MAKE ULTRAMETRIC ----
+
+#names on phylogeny need to match exactly with character df
+#changed names on the newick file
+#Syrrhoe_crenulata to Syrrhoe1, Syrrhoe_sp. to Syrrhoe1
+#Syrrhoites_sp. to Synopiidae1, Syrrhoites_pusilla to Synopiidae2, Synopiidae_sp. to Synopiidae3, Synopia sp. to Synopiidae4
+#Bruzelia_sp. to Bruzelia1
+#Byblis_sp. to Byblis1, Byblis_crassicornis to Byblis2, Byblis_veleronis to Byblis3, Byblis_gaimardi to Byblis4, and Byblis_frigidis to Byblis5
+#Haploops_robusta to Haploops1, Haploops_carinata to Haploops2, Haploops_antarctica to Haploops3, Haploops_tubicola to Haploops4, Haploops_tenuis to Haploops5
+#Ampelisca_macrocephala to Ampelisca1, Ampelisca_brevicornis to Ampelisca2, Ampelisca_eschrichtii to Ampelisca3, Ampelisca_typica to Amplesica4, Ampelisca_diadema to Ampelisca5
+#Antarctomysis_maxima to mysid
+ampeliscid_tree <- read.tree("Ampeliscid.tree.txt") #add your path to your working directory. Don't really need to do this since you set your working directory earlier but it makes me feel better to be repetetive in the R world. 
+plot(ampeliscid_tree)
+nodelabels() #Looks like the branches I deleted in ITOL are only hidden and not gone. 
+#if need to remove nodes with single lineages #tree.pruned <- collapse.singles(tree) #plot(tree_pruned) 
+#Make tree into an ultrametric tree. But first, see if the tree is rooted.
+is.rooted(ampeliscid_tree) #TRUE
+#create ultrametric tree with correlated model. Lambda smoothing parameter, model specifies model of sub rate variation among branches correlated
+ampeliscid_tree_chrono <- chronos(ampeliscid_tree, lambda = 1, model = "correlated")
+# test if tree is ultrametric
+    #ultratree.ampeliscid <- read.tree(text=write.tree(ampeliscid_tree_chrono)) 
+    #is.ultrametric(ultratree.ampeliscid) #TRUE
+plot(ampeliscid_tree_chrono) #take a look, see tips end in same place
+     nodelabels() #double checking no hidden nodes. #good to know which nodes are what number for later in the analysis when looking at state transition info
+
+# STEP 3: IMPORT CHARACTER TABLE, ASSIGN COLORS, & CHECK LABELING ----
+
+### GLAND TYPE ONE ----
+# Here I am doing ASR on the gland type found in ampeliscids and outgroups. gland type one is when the secretory cell is stained
+# The states are as followed: 0 = gland type one not present, 1 = gland type one present
+# I import my character table as a .csv file. 
+gland_states <- read.csv("gland1.states.csv") #add your path to your working directory
+gland_states.df <- data.frame(gland_states) #convert table into a data frame 
+head(gland_states) #take a look at the data frame. 
+gland_states.df$state
+gland_state_colors <- c("white", "lightblue") #assign colors to each state. The first state should always be the "absent" state or 0. Here it will be white, and present will be blue.
+gland_df_ordered <- gland_states.df[match(ampeliscid_tree_chrono$tip.label, gland_states.df$species), ]
+gland_tip_state_colors <- gland_state_colors[gland_df_ordered$state + 1] # Now assign tip colors based on state
+plot(ampeliscid_tree_chrono, show.tip.label = TRUE) #plot with new tip label colors!
+tiplabels(pch = 21, bg = gland_tip_state_colors, col = "black", cex = 1.5, offset = -0.02)
+
+### TERMINAL PORES ----
+#terminal pores absent = 0, terminal pores present 
+terminal_pores <- read.csv("terminal_pores.states.csv")
+terminal_pores.df <- data.frame(terminal_pores)
+terminal_pores_state_colors <- c("white", "purple")
+terminal_pores_df_ordered <- terminal_pores.df[match(ampeliscid_tree_chrono$tip.label, terminal_pores.df$species), ]
+terminal_pores_tip_state_colors <- terminal_pores_state_colors[terminal_pores_df_ordered$state + 1]
+plot(ampeliscid_tree_chrono, show.tip.label = TRUE) #plot with new tip label colors!
+tiplabels(pch = 21, bg = terminal_pores_tip_state_colors, col = "black", cex = 1.5, offset = -0.02)
+
+# STEP 4: ASR!!! ----
+# testing models of evolution and root priors
+# Each code chunk below will represent a different model/root prior combo that I'm testing. Which ever one has the lowest AIC score is the winner. 
+
+### GLAND TYPE ####
+# ER MODEL, MADDFITZ ROOT PRIOR (BEST ONE)
+fitcorER.maddfitz <- rayDISC(ampeliscid_tree_chrono, gland_states.df, 
+                             model = "ER", node.states = "marginal",
+                             state.recon = "subsequently", root.p = "maddfitz")
+fitcorER.maddfitz # AIC 12.259  AICc 12.450
+fitcorER.maddfitz$states
+#node 9 transition between no gland type2 to gland type two
+#0: 7.024920e-03 1: 9.929751e-01
+#0: 9.999945e-01 1: 5.529799e-06
+plotTree(ampeliscid_tree_chrono) #visualize
+nodelabels(pie = fitcorER.maddfitz$states, piecol = gland_state_colors) #add probability pies to node
+tiplabels(pch = 21, bg = gland_tip_state_colors, col = "black", cex = 1.5, offset = -0.03)
+legend("topleft", 
+       legend = c("Gland type one absent (0)", "Gland type one present (1)"),  # adjust labels as needed
+      fill = gland_state_colors, border = "black", cex = 0.9, bty = "n")   # bty="n" removes the box
+
+#other models ----
+# ER MODEL, YANG ROOT PRIOR 
+fitcorER.yang <- rayDISC(ampeliscid_tree_chrono, gland_states.df, 
+                         model = "ER", node.states = "marginal",
+                         state.recon = "subsequently", root.p = "yang")
+fitcorER.yang# AIC 13.62947 AICc 13.81995 #worse than ER.maddfitz
+plotTree(ampeliscid_tree_chrono) 
+nodelabels(pie = fitcorER.yang$states, piecol = gland_state_colors) 
+tiplabels(pch = 21, bg = gland_tip_state_colors, col = "black", cex = 1.5, offset = -0.03)
+# ARD MODEL, MADDFITZ ROOT PRIOR
+fitcorARD.maddfitz <- rayDISC(ampeliscid_tree_chrono, gland_states.df, 
+                              model = "ARD", node.states = "marginal",
+                              state.recon = "subsequently", root.p = "maddfitz")
+fitcorARD.maddfitz # AIC 12.89532 13.49532 #worse
+# ARD MODEL, YANG ROOT PRIOR
+fitcorARD.yang <- rayDISC(ampeliscid_tree_chrono, gland_states.df, 
+                              model = "ARD", node.states = "marginal",
+                              state.recon = "subsequently", root.p = "yang")
+fitcorARD.yang #15.62946 16.22946 the worst one.
+plotTree(ampeliscid_tree_chrono) 
+nodelabels(pie = fitcorARD.yang$states, piecol = gland_state_colors) 
+tiplabels(pch = 21, bg = gland2_tip_state_colors, col = "black", cex = 1.5, offset = -0.03)
+
+### TERMINAL PORES ### ----
+# ER MODEL, MADDFITZ ROOT PRIOR 
+fitcorER.maddfitz <- rayDISC(ampeliscid_tree_chrono, terminal_pores.df, 
+                             model = "ER", node.states = "marginal",
+                             state.recon = "subsequently", root.p = "maddfitz")
+fitcorER.maddfitz #13.50435 13.69483 best one!
+fitcorER.maddfitz$states #from node 13 to 14, so likely happened at the ancestor of Haploops and Ampelisca
+#[13,] 9.999958e-01 4.208576e-06
+#[14,] 8.437436e-03 9.915626e-01
+plotTree(ampeliscid_tree_chrono) #visualize
+nodelabels(pie = fitcorER.maddfitz$states, piecol = terminal_pores_state_colors) #add probability pies to node
+tiplabels(pch = 21, bg = terminal_pores_tip_state_colors, col = "black", cex = 1.5, offset = -0.03)
+legend("topleft", 
+       legend = c("terminal pores absent (0)", "terminal pores present (1)"),  # adjust labels as needed
+       fill = terminal_pores_state_colors, border = "black", cex = 0.9, bty = "n")   # bty="n" removes the box
+#other models ----
+# ER MODEL, YANG ROOT PRIOR 
+fitcorER.yang <- rayDISC(ampeliscid_tree_chrono, terminal_pores.df, 
+                         model = "ER", node.states = "marginal",
+                         state.recon = "subsequently", root.p = "yang")
+fitcorER.yang # 14.87857 15.06904 worse
+# ARD MODEL, MADDFITZ ROOT PRIOR
+fitcorARD.maddfitz <- rayDISC(ampeliscid_tree_chrono, terminal_pores.df, 
+                              model = "ARD", node.states = "marginal",
+                              state.recon = "subsequently", root.p = "maddfitz")
+fitcorARD.maddfitz # 14.82914 15.42914 worse
+
+#MORE ----
+
+### GLAND TYPE TWO ----
+#DETERMINED THAT GLAND TYPE TWO NOT IN AMPELISCIDAE
+# Here I am doing ASR on the gland type found in ampeliscids and outgroups. gland type two is when the secretory cell is not stained
+# The states are as followed: 0 = gland type two not present, 1 = gland type two present
+# I import my character table as a .csv file. 
+#gland_two_states <- read.csv("gland2.states.csv") #add your path to your working directory
+#gland_two_states.df <- data.frame(gland_two_states) #convert table into a data frame 
+#head(gland_two_states) #take a look at the data frame. 
+#gland_two_states.df$state
+#gland_two_state_colors <- c("white", "blue") #assign colors to each state. The first state should always be the "absent" state or 0. Here it will be white, and present will be blue.
+#gland_two_df_ordered <- gland_two_states.df[match(ampeliscid_tree_chrono$tip.label, gland_two_states.df$species), ]
+#gland_two_tip_state_colors <- gland_two_state_colors[gland_two_df_ordered$state + 1] # Now assign tip colors based on state
+#plot(ampeliscid_tree_chrono, show.tip.label = TRUE) #plot with new tip label colors!
+#tiplabels(pch = 21, bg = gland_two_tip_state_colors, col = "black", cex = 1.5, offset = -0.02)
+
+# ER MODEL, MADDFITZ ROOT PRIOR (BEST ONE)
+#fitcorER.maddfitz <- rayDISC(ampeliscid_tree_chrono, gland_two_states.df, 
+#                             model = "ER", node.states = "marginal",
+#                             state.recon = "subsequently", root.p = "maddfitz")
+#fitcorER.maddfitz #AIC 22.22206 AICc 22.41253
+#fitcorER.maddfitz$states
+#plotTree(ampeliscid_tree_chrono) #visualize
+#nodelabels(pie = fitcorER.maddfitz$states, piecol = gland_two_state_colors) #add probability pies to node
+#tiplabels(pch = 21, bg = gland_two_tip_state_colors, col = "black", cex = 1.5, offset = -0.03)
+##legend("topleft", 
+#       legend = c("Gland type two absent (0)", "Gland type one present (1)"),  # adjust labels as needed
+#       fill = gland_two_state_colors, border = "black", cex = 0.9, bty = "n")   # bty="n" removes the box
+#other models ----
+# ARD MODEL, MADDFITZ ROOT PRIOR
+#fitcorARD.maddfitz <- rayDISC(ampeliscid_tree_chrono, gland_two_states.df, 
+#                              model = "ARD", node.states = "marginal",
+#                            state.recon = "subsequently", root.p = "maddfitz")
+#fitcorARD.maddfitz #AIC 23.23733 AICc 23.83733
+#fitcorER.yang <- rayDISC(ampeliscid_tree_chrono, gland_two_states.df, 
+#                              model = "ER", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "yang")
+#fitcorER.yang #AIC 22.47314 AICc 22.66362
