@@ -1,2 +1,9 @@
+# READ_ME
+The R script and files used for ancestral state reconstruction analysis for the publication S. McKim & T. Turner Comparative morphology of silk-spinning systems of the families Ampeliscidae and Paragammaropsidae (Amphipoda) Journal of Crustacean Biology, 2026 46(4)
+
+Files available: character state tables (csv files) and phylogeny (Ampeliscid.tree.txt) 
+
 # Ampeliscidae_publication
-Code for ancestral state reconstruction for Ampeliscidae silk-spinning publication
+Abstract: Silk glands have been found in two groups of amphipods: Corophiida and Ampeliscidae. The silk glands in Ampeliscidae, however, have yet to be examined in detail. We report, for the first time, the morphology and distribution of pereiopodal glands in Ampeliscidae, in non-thread producing Synopiidae, and in Paragammaropsidae. In Ampeliscidae we found two gland types distributed throughout all pereiopods which have the ability to create threads. Pereiopods 3–4 have additional silk-extrusion morphology at the tip of the dactyli in which silk is transformed into semi-cylindrical threads used for building domiciles. Synopiid out- group species have one of the gland types but lack silk-extrusion morphology. Using ancestral state reconstruction analysis, we find that glands in Synopiidae are likely ancestral and hypothesize that silk glands in Ampeliscidae are derived from these ancestral glands. Silk-spinning pereiopods in Paragammaropsidae have similarities with both Corophiida and Ampeliscidae but have distinctions. Ampeliscidae silk-spinning systems bear surprising resemblance to Corophiida which prompts reconsiderations of the taxonomic placement of Ampeliscidae and the origins of silk-spinning in amphipods. This is the first extensive study on the glandular systems of Ampeliscidae, Synopiidae, and Paragammaropsidae using advanced microscopy, providing pertinent morphological data to the study of arthropod silk gland evolution and complex traits.
+
+publication available: https://doi.org/10.1093/jcbiol/ruag070
